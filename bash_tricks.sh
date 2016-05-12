@@ -112,15 +112,26 @@ gobook() {
     rdesktop -K -u nibz -p $WINDOWS_PASSWORD -g 95% localhost
 }
 
+# If you give vim a file with a line number
+#     vim ~/git/nova/HACKING.rst:52
+# it will follow the line number
+vim() {
+  if [[ $1 =~ :[0-9]+$ ]]; then
+    command vim +${1##*:} ${1%%:*}
+  else 
+    command vim $@
+  fi
+}
 
-# Have vim inspect command history
-vim () {
-    last_command=$(history | tail -n 2 | head -n 1)
-    if [[ $last_command =~ 'git grep' ]] && [[ "$*" =~ :[0-9]+:$ ]]; then
-        line_number=$(echo $* | awk -F: '{print $(NF-1)}')
-        /usr/bin/vim +${line_number} ${*%:${line_number}:}
+# Open git grep in vim
+# Use 'gf' or 'gF' in Vim to open file under cusor to file and/or exact line
+ggv () { 
+  results=$(git grep $@) 
+  if [[ "${results}" != "" ]]
+    then
+      vim -c "setlocal buftype=nofile bufhidden=hide noswapfile" -c "let @/="'"'$@'"'" | set hls" - <<< "$results"
     else
-        /usr/bin/vim "$@"
+      return -1
     fi
 }
 
